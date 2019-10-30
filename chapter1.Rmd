@@ -2,3 +2,18 @@
 # About the project
 
 *Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you can use R Markdown syntax.*
+
+#First exercise#
+
+I am feeling confused and a bit stressed. But also excited as well. I expect to learn the tools and some statistics.
+
+Here is the link to my github repository
+<https://github.com/tiinasip/IODS-project>
+
+And here is the link to my diary
+<https://tiinasip.github.io/IODS-project/>
+Another way to put the lind to myd diary [diary](https://tiinasip.github.io/IODS-project/)
+
+**bold text** as test,*italics* as test
+
+<!--Comment here -->
