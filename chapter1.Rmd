@@ -24,8 +24,8 @@ Then just a couple of lists to learn to make the lists:
 
 1. Item
     i) Item
-    ii) Item
-          a. Item
+    ii) Item 2
+          a. Item 3
 
     
 I heard from this course from my colleague.
