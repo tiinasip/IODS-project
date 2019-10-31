@@ -9,7 +9,7 @@ I am feeling `confused` and a bit *stressed*. But also **excited** as well.
 
 My expectations are:
 
-- learn the tools
+- learn the tools and methods
 - learn to analyse and use statistics
 - refresh my old knowledge 
 - understand the possibilites of open data & tools
