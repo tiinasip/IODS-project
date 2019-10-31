@@ -1,19 +1,43 @@
 
 # About the project
 
-*Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you can use R Markdown syntax.*
+*This course is to give the understanding of open data, open science, and open research tools.*
 
-#First exercise#
+# First exercise{#alku}
 
-I am feeling confused and a bit stressed. But also excited as well. I expect to learn the tools and some statistics.
+I am feeling `confused` and a bit *stressed*. But also **excited** as well. 
+
+My expectations are:
+
+- learn the tools
+- learn to analyse and use statistics
+- refresh my old knowledge 
+- understand the possibilites of open data & tools
+
+
+Then just a couple of lists to learn to make the lists:
+
+* Item 1
+  + Item 1.1
+  + Item 1.2
+    - Item 1.2.1
+
+1. Item
+    i) Item
+    ii) Item
+          a. Item
+
+    
+I heard from this course from my colleague.
 
 Here is the link to my github repository
 <https://github.com/tiinasip/IODS-project>
 
 And here is the link to my diary
 <https://tiinasip.github.io/IODS-project/>
-Another way to put the lind to myd diary [diary](https://tiinasip.github.io/IODS-project/)
 
-**bold text** as test,*italics* as test
+Another way to add the link to my [diary](https://tiinasip.github.io/IODS-project/)
+
+
 
 <!--Comment here -->
