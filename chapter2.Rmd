@@ -1,7 +1,126 @@
-# Insert chapter 2 title here
+# Exercise 2
 
 *Describe the work you have done this week and summarize your learning.*
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
+I have went through Data camp parts R short and sweet and Regression and model validation. I have also listened a couple of statistics classes from YouTube and went through the chapters 3 & 4 from Kimmo's textbook.
+
+I have learned some basics in R and refreshed my knowledge about regression analysis.
+
+Code for data creatis is abailabe at #tähän linkki iods-projekt
+<https://github.com/tiinasip/IODS-project>
+
+Code for data analysis (although it is thoroughly described in this report)
+
+# Data analysis
+Data was collected in a survey for students attending statistics course. The aim was to find out, which factors have effect on course success. Originally there were many questions that were now grouped to be strategic, surface and deep questions.
+
+Analysis starts with reading the data and taking the summary:
+
+```{r readdata,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+learnings2 <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt ", sep=",", header=TRUE)
+dim(learnings2)
+str(learnings2)
+summary(learnings2)
+```
+```{r datastructure}
+dim(learnings2)
+str(learnings2)
+summary(learnings2)
+```
+
+There are 166 rows and 7 variables/columns. 7 variables are: gender, age, attitude, deep, stra, surf and points. Gender is factor (male/female), age and points are integer, attiture, deep , stra and surf are numeric. 
+
+Medians and means seem to be quite close to each other, which is one indication of normal distribution but does not confirm it alone.
+
+```{r fig1, fig.path="figures/"}
+pairs(learnings2[-1],col = learnings2$gender, main="Graphical summary")
+```
+
+The scatter plot shows low correlations to other combinations thant points and attitude. For instance, stra and surf seem to have no correlations as the points are distributed widely. There is no clear positive, negative or curved correlation clearly visible in the figure. 
+
+Analysis is continued with a more detailed graphical analysis of variables. First without gender graphical summary.
+```{r fig2, fig.path="figures/"}
+library(GGally)
+library(ggplot2)
+ ggpairs(learnings2, mapping = aes(), title="Scatter plot matrix, no gender as column ",lower = list(combo = wrap("facethist", bins = 20)))
+```
+
+
+And then by gender
+
+```{r fig3, fig.path="figures/", fig.dim=c(10,10), results='hide', message=FALSE}
+
+# create a more advanced plot matrix with ggpairs()
+ggpairs(learnings2, mapping = aes(col=gender, alpha = 0.3), title="Graphical summary and gender ",
+             lower = list(combo = wrap("facethist", bins = 20))
+        )
+```
+
+
+#Distributions
+Age distribution is right-tailed, deep is left-tailed, especially for males.
+Strategic distribution is approximately symmetrical, especially for males. Surface is also quite symmetric.
+Attitude is interesting. When both genders are in, it looks quite symmetric. But for males it is left-tailed
+Points are bimodally distributed or for males even multimodal. 
+Gender is nominal measurement meaning the categories are mutually exclusive and have no logical order.
+
+If the correlation is between  +/- 0.5 and +/-1, the correlation could be strong. Only points and attitude correlation (0.437) is close to that, which indicates that they have the strongest connection in the data and other variables are not that meaningful. The second highest correlation is between surf and deep, but it is  -0.324.
+
+#Regression
+Three variables selected as explanatory are:
+- Attitude
+- Strategic
+- Surface
+They were selected, because they had highest absolute correlations (0,437,0,146 and 0,144) with the points, which is our target variable.
+
+First the model with only attitude
+```{r fig4, fig.path="figures/", fig.dim=c(10,10), results='hide', message=FALSE}
+qplot(attitude, points, data = learnings2) + geom_smooth(method = "lm")
+```
+
+```{r }
+my_model <- lm(points ~ attitude, data = learnings2)
+summary(my_model)
+```
+```{r, results='asis'}
+my_model <- lm(points ~ attitude, data = learnings2)
+results <- summary(my_model)
+```
+P values of both intercept and attitude are under 0.05 indicating significant statistic correlation. T value is >2 indicating that as well.
+
+Validation of graphical model is below. Normal Q-Q shows that both attitude and points seem to come from the same distribution, forming a line that’s roughly straight. It seems that the variables are normally distributed, although some pairs both at the beginning and at the end are not following the line. 
+
+Residuals vs. fitted tests, if the relationship of the variables is linear. If the plot is relatively shapeless, there are no obvious outliers and the data is generally symmetrically around 0 line, it is indicating linearity. In this case the plot is quite good as there is no pattern. There are some outliers, but not many and the values are around 0. 
+
+```{r fig5, fig.path="figures/"}
+plot(my_model, which=c(1,2,5))
+```
+
+Also residuals vs. leverage figure indicates that there are no significant outliers. There are no many points in outside Cook's distance line meaning there are not outliers that would change the regression result if I exclude those cases.
+
+Next step is to add stra to the model and check the summary. 
+```{r, results2='asis'}
+my_model2 <- lm(points ~ attitude + stra, data = learnings2)
+summary(my_model2)
+```
+
+Third model is created by adding both stra and surf to the first model and check if the model is improved.
+
+```{r, results3='asis'}
+my_model3 <- lm(points ~ attitude + stra + surf, data = learnings2)
+summary(my_model3)
+```
+
+The second model with attitude and stra does not seem to create the model better. Stra's p value is >0.05 meaning it is not statistically significant and could be dropped from the model.
+
+The third model with attitude, stra and surf ends up to the same conclusion. Both stra and surf have p value >0.05 meaning they could be dropped from the model.It is adviced that one should choose the simple model when adding the variables does not improve the model.
+
+But when the adjusted R-squares are checked, the situation changes. The adjusted R-squared compares the explanatory power of regression models that contain different numbers of predictors. Adjusted R-square of the model is 0.1856. The second model has adjusted R-square 0.1951. The third model has adjusted R-squared 0.1927. However, all these adjusted R values are low. Adjusted R-square tells the proportion of the variability in the dependent variable that is explained by the model.
+
+I check still the diagnostics of model 2 regressio, but their output is very similar to the diagnostics of the first model.
+
+```{r fig6, fig.path="figures/"}
+plot(my_model2, which=c(1,2,5))
+```
+
+It is generally advisable to use simpler model when possible. As additional coefficients did not create clearly better model, I would use the simple points ~ attitude model.
