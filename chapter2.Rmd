@@ -1,7 +1,6 @@
 # Exercise 2
 
-*Describe the work you have done this week and summarize your learning.*
-
+*Work summary*
 I have went through Data camp parts R short and sweet and Regression and model validation. I have also listened a couple of statistics classes from YouTube and went through the chapters 3 & 4 from Kimmo's textbook.
 
 I have learned some basics in R and refreshed my knowledge about regression analysis.
