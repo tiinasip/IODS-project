@@ -5,10 +5,11 @@ I have went through Data camp parts R short and sweet and Regression and model v
 
 I have learned some basics in R and refreshed my knowledge about regression analysis.
 
-Code for data creatis is abailabe at #tähän linkki iods-projekt
-<https://github.com/tiinasip/IODS-project>
+Code for data creation is available at 
+<https://github.com/tiinasip/IODS-project/blob/master/data/create_learning2014.R>
 
 Code for data analysis (although it is thoroughly described in this report)
+<https://github.com/tiinasip/IODS-project/blob/master/Exercise2_AnalysisPart.R>
 
 # Data analysis
 Data was collected in a survey for students attending statistics course. The aim was to find out, which factors have effect on course success. Originally there were many questions that were now grouped to be strategic, surface and deep questions.
