@@ -5,21 +5,22 @@ date: "7.11.2019"
 output: html_document
 ---
 
+# Exercise 3
 *Work summary*
 
 Code for data creation is available at 
-<https://github.com/tiinasip/IODS-project/blob/master/data/create_learning2014.R>
+<https://github.com/tiinasip/IODS-project/blob/master/data/create_alc.R>
 
 Code for data analysis (although it is thoroughly described in this report)
-<https://github.com/tiinasip/IODS-project/blob/master/Exercise2_AnalysisPart.R>
+<https://github.com/tiinasip/IODS-project/blob/master/data/alc_analysis.R>
 
-# Data analysis
+## Data analysis
 
 Data is about student achievent in seconday education of two Portuguese schools.The data attributes include student grades, demographic, social and school related features) and it was collected by using school reports and questionnaires. The purpose of the analysis to find relationships between high or low alcohol consumption and other variables available.
 
 Analysis starts with reading the data and taking the summary:
 
-```{r readdata,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 2,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
 alc <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt", sep=",", header=TRUE)
 dim(alc)
 str(alc)
@@ -49,7 +50,7 @@ alc_gender + geom_boxplot(outlier.colour="green") + ylab("grade")+ggtitle("Stude
 
 There are some outliers, which are coloured green.Next check the crosstables between gender and high use.
 
-```{r datastructure}
+```{r datastructure 7}
 alc_gender_table <-table(alc$sex,alc$high_use)
 prop.table(alc_gender_table,2) #based on column totals
 prop.table(alc_gender_table,1) #based on row totals
