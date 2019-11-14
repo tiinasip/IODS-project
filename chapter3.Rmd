@@ -1,0 +1,208 @@
+---
+title: "Exercise 3"
+author: "Tiina Siponen"
+date: "7.11.2019"
+output: html_document
+---
+
+*Work summary*
+
+Code for data creation is available at 
+<https://github.com/tiinasip/IODS-project/blob/master/data/create_learning2014.R>
+
+Code for data analysis (although it is thoroughly described in this report)
+<https://github.com/tiinasip/IODS-project/blob/master/Exercise2_AnalysisPart.R>
+
+# Data analysis
+
+Data is about student achievent in seconday education of two Portuguese schools.The data attributes include student grades, demographic, social and school related features) and it was collected by using school reports and questionnaires. The purpose of the analysis to find relationships between high or low alcohol consumption and other variables available.
+
+Analysis starts with reading the data and taking the summary:
+
+```{r readdata,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+alc <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt", sep=",", header=TRUE)
+dim(alc)
+str(alc)
+summary(alc)
+```
+```{r fig10, fig.path="figures/"}
+library(GGally)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+gather(alc) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free")+geom_bar()
+```
+
+## Choosing the interesting variables
+
+- higher: wants to take higher education (binary: yes or no). My hypothesis is that students targeting to higher education are less likely to use a lot of alcohol. 
+- romantic:with a romantic relationship (binary: yes or no). My hypothesis is that students having a romantic relationship  are less likely to use a lot of alcohol.  
+- gender. My hypothesis is that male students are more likely to use a lot of alcohol than female students.
+- activities: extra-curricular activities (binary: yes or no).My hypothesis is that students having activities are less likely to use a lot of alcohol. 
+- weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours). My hypothesis is that students using more time (value 3 or 4) to study are less likely using a lot of alcohol. 
+
+### Gender
+```{r fig11, fig.path="figures/",fig.dim=c(6,6)}
+alc_gender <- ggplot(alc, aes(x = high_use, y = G3, col=sex))
+alc_gender + geom_boxplot(outlier.colour="green") + ylab("grade")+ggtitle("Student grades by alcohol consumption and sex, outliers green")
+```
+
+There are some outliers, which are coloured green.Next check the crosstables between gender and high use.
+
+```{r datastructure}
+alc_gender_table <-table(alc$sex,alc$high_use)
+prop.table(alc_gender_table,2) #based on column totals
+prop.table(alc_gender_table,1) #based on row totals
+```
+
+```{r fig20, fig.path="figures/", fig.dim=c(6,6)}
+g1_ge <- ggplot(data = alc, aes(x = high_use, fill=sex))
+g1_ge + geom_bar()+ggtitle("Gender and high alcohol use")
+```
+
+Gender in the data follows binomial distribution. 63 % of high users are males.Also the percentage of high users is higher for males (39%) than females (21%)
+
+
+### Higher education target
+```{r fig12, fig.path="figures/",fig.dim=c(10,10)}
+alc_higher <- ggplot(alc, aes(x = high_use, y = G3, col=higher))
+alc_higher + geom_boxplot(outlier.colour="green") + ylab("grade")+ggtitle("Student grades by alcohol consumption and higher education")
+```
+
+
+```{r, results1='asis'}
+alc_higher_table <-table(alc$higher,alc$high_use)
+prop.table(alc_higher_table,2) #based on column totals
+prop.table(alc_higher_table,1) #based on row totals
+```
+
+```{r fig13, fig.path="figures/", fig.dim=c(6,6)}
+g1_hi <- ggplot(data = alc, aes(x = high_use, fill=higher))
+g1_hi + geom_bar()+ggtitle("Higher education target and high alcohol use")
+```
+Higher education target follows binomial distribution.8 % of high users are not targetting higher indicating that higher education target may not explain much of high use. Also the percentage of high use is only 50 % for students not targeting higher education.
+
+### Romantic relationship
+```{r fig14, fig.path="figures/"}
+alc_romantic <- ggplot(alc, aes(x = high_use, y = G3, col=romantic))
+alc_romantic + geom_boxplot(outlier.colour="green") + ylab("grade")+ggtitle("Student grades by alcohol consumption and romantic relationship")
+```
+
+
+```{r, results2='asis'}
+alc_romantic_table <-table(alc$romantic,alc$high_use)
+prop.table(alc_romantic_table,2) #based on column totals
+prop.table(alc_romantic_table,1) #based on row totals
+```
+
+
+```{r fig15, fig.path="figures/", fig.dim=c(6,6)}
+g1_ro <- ggplot(data = alc, aes(x = high_use, fill=romantic))
+g1_ro + geom_bar()+ggtitle("Romantic relationship and high alcohol use")
+```
+Romantic relationship ollows binomial distribution.71 % of high users are not in romantic relationship. However, the share of high user from students having romantic relationship is 27% and from students not having relationship 30%. It seems that romantic relationship may not explain much.
+
+### Studytime
+```{r fig18, fig.path="figures/"}
+alc$studytime <-as.factor(alc$studytime)
+alc_studytime <- ggplot(alc, aes(x = studytime, y = G3, col=high_use))
+alc_studytime + geom_boxplot(outlier.colour="red") + ylab("grade")+ggtitle("Student grades by alcohol consumption and weekly studytime")
+```
+
+```{r, results3='asis'}
+alc_studytime_table <-table(alc$studytime,alc$high_use)
+prop.table(alc_studytime_table,2) #based on column totals
+prop.table(alc_studytime_table,1) #based on row totals
+```
+
+```{r fig19, fig.path="figures/", fig.dim=c(6,6)}
+g1_st <- ggplot(data = alc, aes(x = studytime, fill=high_use))
+g1_st + geom_bar()+ggtitle("Studytime and high alcohol use")
+```
+Studytime follows ordinal scale. The percentages of high users are highest in studytime groups 1 and 2 (38% and 51%, respectively). The share of high users in studytime group 1 is the highest (42%). Surprisingly, the highest median grade is among high users whose study a lot. But for non-high-users the highest median is in the studytime group 3. However, n is much lower in studytime groups 3 and 4, so individiual performance influences more.
+
+### Activities
+```{r fig16, fig.path="figures/",fig.dim=c(6,6)}
+alc_activities <- ggplot(alc, aes(x = high_use, y = G3, col=activities))
+alc_activities + geom_boxplot(outlier.colour="green") + ylab("grade")+ggtitle("Student grades by alcohol consumption and activities")
+```
+
+
+```{r, results4='asis',fig.dim=c(6,6)}
+alc_activities_table <-table(alc$activities,alc$high_use)
+prop.table(alc_activities_table,2) #based on column totals
+prop.table(alc_activities_table,1) #based on row totals
+```
+
+```{r fig17, fig.path="figures/", fig.dim=c(6,6)}
+g1_ac <- ggplot(data = alc, aes(x = high_use, fill=activities))
+g1_ac + geom_bar()+ggtitle("Activities and high alcohol use")
+```
+Activities follow binomial distribution.53 % of high users are not doing activities. However, the share of high user from students having activities is 27% and from students not having activites 33%. It seems that activities may not explain much.
+
+## Logistig regression model
+As a conclusion it seems that my chosen variables are not explaining much. Sex and studytime seem to be the srongest candidates. Next I create model.
+
+```{r, results5='asis'}
+# find the model with glm()
+m <- glm(high_use ~ sex + higher+ romantic + activities + studytime, data = alc, family = "binomial")
+summary(m)
+#coefficients
+coef(m)
+```
+From model it is clear that only sex and studytime are significant in the model. For others Pr(>|z|) is more than 0.05. I had five hypothesis and two of them were true, others were not confirmed.
+
+Odds ratio greater than one means odds are getting larger. Only sex is more than one so it is increasing odds that the student is a high-user. Odds ratio less than one means odds are getting smaller. Studytime has the smallest odds ratio. Confidence interval of studytime is (0.47, 0.87) meaning it remains under 1. Respectively sex's confidence interval remains clearly over 1 (1.21, 3.25). On the other hand, non-meaningful variables have confidence intervals having values below and above 1 indicating that odds ratio is not very reliable.
+```{r datastructure 2}
+# compute odds ratios (OR)
+OR <- coef(m) %>% exp
+# compute confidence intervals (CI)
+CI <-confint(m)%>% exp
+# print out the odds ratios with their confidence intervals
+cbind(OR, CI)
+```
+
+As higher, romantic and activities were not significant, a new model is created and used for prediction as instructed.
+```{r datastructure 3}
+m2 <- glm(high_use ~ sex +  studytime, data = alc, family = "binomial")
+summary(m2)
+#coefficients
+coef(m2)
+```
+Odds ratios and confidence intervals of new model.
+```{r datastructure 5}
+# compute odds ratios (OR)
+OR <- coef(m2) %>% exp
+# compute confidence intervals (CI)
+CI <-confint(m2)%>% exp
+# print out the odds ratios with their confidence intervals
+cbind(OR, CI)
+```
+
+
+## Prediction
+```{r datastructure 10}
+# predict() the probability of high_use
+probabilities <- predict(m2, type = "response")
+# add the predicted probabilities to 'alc'
+alc <- mutate(alc, probability = probabilities)
+# use the probabilities to make a prediction of high_use
+alc <- mutate(alc, prediction = probability>0.5)
+# see the last ten original classes, predicted probabilities, and class predictions
+select(alc, sex, studytime, high_use, probability, prediction) %>% tail(10)
+```
+
+Binary predictions in figure:
+
+```{r fig24, fig.path="figures/",fig.dim=c(4,4)}
+#a plot of 'high_use' versus 'probability' in 'alc'
+g <- ggplot(alc, aes(x = probability, y = high_use, col=prediction))
+g+geom_point(aes(col=prediction))
+```
+
+The model predict correctly in 270 cases.However, the model does not predict any high users so the model is not reliable. Basically it is as reliable as always guess that the student is never a high-alc-user. 
+```{r datastructure 6}
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$prediction)
+```
+Analysis by models have advantages over guessing. In this case guessing produced good candidates, but the analysis showed their weaknesses. On the other hand, there were probably many other variables which had had significance but I did not take them into analysis because of my prejudices. 
