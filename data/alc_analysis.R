@@ -123,7 +123,7 @@ table(high_use = alc$high_use, prediction = alc$prediction)
 ##check if these are valid
 
 # predict() the probability of high_use
-probabilities <- predict(m, type = "response")
+probabilities <- predict(m2, type = "response")
 # add the predicted probabilities to 'alc'
 alc <- mutate(alc, probability = probabilities)
 # use the probabilities to make a prediction of high_use

@@ -51,8 +51,9 @@ str(learningsselected)
 #also possible as setwd("~/IODS-project")
 #checking how to use write.csv
 #?write.csv
-#write csv file to data folder
-write.csv(learningsselected, "~/IODS-project/data/learning2014_2.csv", sep = ",", header = TRUE)
+#write csv file to data folder in  both ways
+write.csv(learningsselected, "~/IODS-project/data/learning2014.csv", sep = ",", header = TRUE)
+write.table(learningsselected, "~/IODS-project/data/learning2014_table.csv", sep = ",", header = TRUE)
 
 #check how to read csv file
 #?read.csv

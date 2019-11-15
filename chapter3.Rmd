@@ -65,7 +65,7 @@ Gender in the data follows binomial distribution. 63 % of high users are males.A
 
 
 ### Higher education target
-```{r fig12, fig.path="figures/",fig.dim=c(10,10)}
+```{r fig12, fig.path="figures/",fig.dim=c(6,6)}
 alc_higher <- ggplot(alc, aes(x = high_use, y = G3, col=higher))
 alc_higher + geom_boxplot(outlier.colour="green") + ylab("grade")+ggtitle("Student grades by alcohol consumption and higher education")
 ```
@@ -81,6 +81,7 @@ prop.table(alc_higher_table,1) #based on row totals
 g1_hi <- ggplot(data = alc, aes(x = high_use, fill=higher))
 g1_hi + geom_bar()+ggtitle("Higher education target and high alcohol use")
 ```
+
 Higher education target follows binomial distribution.8 % of high users are not targetting higher indicating that higher education target may not explain much of high use. Also the percentage of high use is only 50 % for students not targeting higher education.
 
 ### Romantic relationship
@@ -101,6 +102,7 @@ prop.table(alc_romantic_table,1) #based on row totals
 g1_ro <- ggplot(data = alc, aes(x = high_use, fill=romantic))
 g1_ro + geom_bar()+ggtitle("Romantic relationship and high alcohol use")
 ```
+
 Romantic relationship ollows binomial distribution.71 % of high users are not in romantic relationship. However, the share of high user from students having romantic relationship is 27% and from students not having relationship 30%. It seems that romantic relationship may not explain much.
 
 ### Studytime
@@ -120,6 +122,7 @@ prop.table(alc_studytime_table,1) #based on row totals
 g1_st <- ggplot(data = alc, aes(x = studytime, fill=high_use))
 g1_st + geom_bar()+ggtitle("Studytime and high alcohol use")
 ```
+
 Studytime follows ordinal scale. The percentages of high users are highest in studytime groups 1 and 2 (38% and 51%, respectively). The share of high users in studytime group 1 is the highest (42%). Surprisingly, the highest median grade is among high users whose study a lot. But for non-high-users the highest median is in the studytime group 3. However, n is much lower in studytime groups 3 and 4, so individiual performance influences more.
 
 ### Activities
@@ -139,6 +142,7 @@ prop.table(alc_activities_table,1) #based on row totals
 g1_ac <- ggplot(data = alc, aes(x = high_use, fill=activities))
 g1_ac + geom_bar()+ggtitle("Activities and high alcohol use")
 ```
+
 Activities follow binomial distribution.53 % of high users are not doing activities. However, the share of high user from students having activities is 27% and from students not having activites 33%. It seems that activities may not explain much.
 
 ## Logistig regression model
@@ -151,9 +155,9 @@ summary(m)
 #coefficients
 coef(m)
 ```
-From model it is clear that only sex and studytime are significant in the model. For others Pr(>|z|) is more than 0.05. I had five hypothesis and two of them were true, others were not confirmed.
+From model it is clear that only sex and studytime are significant in the model. For others Pr(>|z|) is more than 0.05. I had five hypothesis and two of them were true in the sample indicating that there is a relationship in the population. Other 3 hypothesis were rejected based on the sample.
 
-Odds ratio greater than one means odds are getting larger. Only sex is more than one so it is increasing odds that the student is a high-user. Odds ratio less than one means odds are getting smaller. Studytime has the smallest odds ratio. Confidence interval of studytime is (0.47, 0.87) meaning it remains under 1. Respectively sex's confidence interval remains clearly over 1 (1.21, 3.25). On the other hand, non-meaningful variables have confidence intervals having values below and above 1 indicating that odds ratio is not very reliable.
+Odds ratio greater than one means odds are getting larger. Only sex is more than one so it is increasing odds that the student is a high-user. Odds ratio less than one means odds are getting smaller. Studytime has the smallest odds ratio. Confidence interval of studytime is (0.47, 0.87) meaning it remains under 1. Respectively sex's confidence interval remains clearly over 1 (1.21, 3.25). On the other hand, non-meaningful variables have confidence intervals having values below and above 1 indicating that odds ratio is not significant for decision making.
 ```{r datastructure 2}
 # compute odds ratios (OR)
 OR <- coef(m) %>% exp
@@ -201,9 +205,11 @@ g <- ggplot(alc, aes(x = probability, y = high_use, col=prediction))
 g+geom_point(aes(col=prediction))
 ```
 
-The model predict correctly in 270 cases.However, the model does not predict any high users so the model is not reliable. Basically it is as reliable as always guess that the student is never a high-alc-user. 
+The model predict correctly in 270 cases of non-users. But the model did not predict any high-users at all. The same prediction power is just always guess that the student is not a high-user, and it is actually a relevant idea compared to the bad model, because 71 % of students in the survey were not high-users.
+
 ```{r datastructure 6}
 # tabulate the target variable versus the predictions
 table(high_use = alc$high_use, prediction = alc$prediction)
+table(high_use = alc$high_use, prediction = alc$prediction) %>% prop.table() %>% addmargins()
 ```
 Analysis by models have advantages over guessing. In this case guessing produced good candidates, but the analysis showed their weaknesses. On the other hand, there were probably many other variables which had had significance but I did not take them into analysis because of my prejudices. 
