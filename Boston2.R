@@ -18,7 +18,7 @@ boston_scaled2<-as.data.frame(boston_scaled2)
 dist_eu<- dist(boston_scaled2)
 summary(dist_eu)
 
-#kmeans clusterin
+#kmeans clusterin, first try with 4 clusters
 km <-kmeans(boston_scaled2, centers = 4)
 # plot the Boston dataset with clusters
 pairs(boston_scaled2, col = km$cluster)
@@ -32,20 +32,9 @@ twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
 # visualize the results
 qplot(x = 1:k_max, y = twcss, geom = 'line',main="WGSS and groups in K-means solution")
 
-#optimal number of groups is 3
-km <-kmeans(boston_scaled2, centers = 3)
+#optimal number of groups is 2
+km <-kmeans(boston_scaled2, centers = 2)
 str(km)
 # plot the Boston dataset with clusters
 pairs(boston_scaled2, col = km$cluster)
 
-# silhouette method try
-#avg_sil <- function(k) {
- # km.res <- kmeans(boston_scaled2, centers = k, nstart = 25)
-#  ss <- silhouette(km.res$cluster, dist(boston_scaled2))
-#  mean(ss[, 3])
-#}
-# Compute and plot wss for k = 2 to k = 15
-#k.values <- 2:15
-# extract avg silhouette for 2-15 clusters
-#avg_sil_values <- map_dbl(k.values, avg_sil)
-#plot(k.values, avg_sil_values, type = "b", pch = 19, frame = FALSE, xlab = "Number of clusters K", ylab = "Average Silhouettes")

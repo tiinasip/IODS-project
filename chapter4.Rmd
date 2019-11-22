@@ -1,5 +1,5 @@
 ---
-title: "chapter4.Rmd"
+title: "Exercise 4"
 author: "Tiina Siponen"
 date: "15.11.2019"
 output: html_document
@@ -8,11 +8,12 @@ output: html_document
 # Exercise 4
 *Work summary*
 
-Code for data creation is available at 
-<https://github.com/tiinasip/IODS-project/blob/master/data/create_alc.R>
+Codes are available at 
 
-Code for data analysis (although it is thoroughly described in this report)
-<https://github.com/tiinasip/IODS-project/blob/master/data/alc_analysis.R>
+- <https://github.com/tiinasip/IODS-project/blob/master/Boston.R>
+- <https://github.com/tiinasip/IODS-project/blob/master/Boston2.R>
+- <https://github.com/tiinasip/IODS-project/blob/master/Boston3.R>
+- <https://github.com/tiinasip/IODS-project/blob/master/create_human.R>
 
 
 ## Data load and description
@@ -35,7 +36,7 @@ Descriptions of variables are:
 - MEDV: Median value of owner-occupied homes in $1000s
 
 
-```{r readdata 20,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 20,echo=TRUE,message=FALSE,warning=FALSE}
 library(MASS)
 data("Boston")
 dim(Boston)
@@ -43,8 +44,8 @@ str(Boston)
 summary(Boston)
 ```
 
-According to the information the Boston data frame has 506 rows and 14 columns. That is equal to my check. There is no missing valuse either. 
-```{r readdata 21,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+According to the information the Boston data frame has 506 rows and 14 columns. That is equal to my check. There is no missing values either. 
+```{r readdata 29,echo=TRUE,message=FALSE,warning=FALSE}
 sum(is.na(Boston))
 mean(is.na(Boston))
 ```
@@ -58,7 +59,7 @@ From graphical overview it is easy to notice at least the following:
 - tax, rad and indus are bimodally distributed
 - lstat, nox and dis are skewed to the left
 
-```{r readdata 19,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 19,echo=TRUE,message=FALSE,warning=FALSE}
 library(GGally)
 library(ggplot2)
  ggpairs(Boston, mapping = aes(), title="Scatter plot matrix, distributions ",lower = list(combo = wrap("facethist", bins = 20)))
@@ -73,16 +74,16 @@ pairs(Boston[-1], main="Graphical summary")
 
 ## Standardization
 Scaling targets to normalising:
-```{r readdata 21,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 21,echo=TRUE,message=FALSE,warning=FALSE}
 boston_scaled <- scale(Boston)
 summary(boston_scaled)
 
 ```
 
-When summary of scaled data is compared to the original data, it is easy to see that magnitudes of min and max values have decreased. For instance, max of lstat was 37.97 and after scaling 3.54, respectively black max 396.9 and 0.44. Zn min was 0, now -0.49, rm min was 3.56, now -3.88.
+When summary of scaled data is compared to the original data, it is easy to see that magnitudes of min and max values have decreased and mean is always 0. For instance, max of lstat was 37.97 and after scaling 3.54, respectively black max 396.9 and 0.44. Zn min was 0, now -0.49, rm min was 3.56, now -3.88.
 
 Categorial variable crim is created:
-```{r readdata 22,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 22,echo=TRUE,message=FALSE,warning=FALSE}
 # change the object to data frame, because vector otherwise causes an error in next phase
 boston_scaled<-as.data.frame(boston_scaled)
 bins <- quantile(boston_scaled$crim)
@@ -97,7 +98,7 @@ boston_scaled <- data.frame(boston_scaled, crime)
 ```
 
 Testing and training sets are created:
-```{r readdata 23,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 23,echo=TRUE,message=FALSE,warning=FALSE}
 # number of rows in the Boston dataset 
 n <- nrow(boston_scaled)
 # randomly 80% of the rows
@@ -116,7 +117,7 @@ test <- dplyr::select(test, -crime)
 
 ## LDA
 
-```{r readdata 23,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 30,echo=TRUE,message=FALSE,warning=FALSE}
 lda.fit <- lda(crime~., data = train)
 lda.fit
 # the function for lda biplot arrows
@@ -134,13 +135,14 @@ classes <- as.numeric(train$crime)
 ```
 
 
-```{r fig22, fig.path="figures/"}
+```{r fig28, fig.path="figures/"}
 # plot the lda results
 plot(lda.fit, dimen = 2, col=classes, pch=classes)
 lda.arrows(lda.fit, myscale = 1)
+lda.pred <- predict(lda.fit, newdata = test)
 ```
 
-```{r readdata 23,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 31,echo=TRUE,message=FALSE,warning=FALSE}
 # cross tabulate the results
 table(correct = correct_classes, predicted = lda.pred$class)
 ```
@@ -149,7 +151,7 @@ table(correct = correct_classes, predicted = lda.pred$class)
 ## Distances and kmeans
 
 Boston dataset is reloaded again and the done modifications are not valid any more. Data is standardi
-```{r readdata 24,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 24,echo=TRUE,message=FALSE,warning=FALSE}
 library(MASS)
 data("Boston")
 summary(Boston)
@@ -160,7 +162,7 @@ boston_scaled2<-as.data.frame(boston_scaled2)
 ```
 
 Distances calculation:
-```{r readdata 25,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 25,echo=TRUE,message=FALSE,warning=FALSE}
 dist_eu<- dist(boston_scaled2)
 summary(dist_eu)
 ```
@@ -170,7 +172,7 @@ Kmeans clustering and pairs are calculated, but the number of centers here is 4,
 km <-kmeans(boston_scaled2, centers = 4)
 pairs(boston_scaled2, col = km$cluster)
 ```
-To find the optimal number of clusters is not irrelevant question and the textbook recommends the method to plot within-group sum of squares associated with the k-means solution for each number of groups. Then the "elbow" in the picture gives indication of the most useful solution. The plot below indicates that the elbow is in 2, after 2 the decrease is slower. However, even with 3 it is still significant and therefore I choose to use 3.
+To find the optimal number of clusters is not irrelevant question and the textbook recommends the method to plot within-group sum of squares associated with the k-means solution for each number of groups. Then the "elbow" in the picture gives indication of the most useful solution. The plot below indicates that the elbow is in 2, after 2 the decrease is slower. However, even with 3 it is still significant but I choose to use 2.
 
 ```{r fig23, fig.path="figures/",fig.dim=c(12,12)}
 set.seed(123)
@@ -181,23 +183,28 @@ twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
 # visualize the results
 qplot(x = 1:k_max, y = twcss, geom = 'line', main="WGSS and groups in K-means solution")
 ```
-Only 45 % total variance in  data set that is explained by the clusterin, which is not impressive. I checked how many clusters I should have to gain 80 % of total variance and it was 20. It is clear that it is too much, so I still keep 3 clusters. In real-life I should continue finding the correct number of clusters by other methods, e.g. silhouette.
+Only 51 % total variance in  data set that is explained by the first clustering with 4 clusters, which is not impressive. I checked how many clusters I should have to gain 80 % of total variance and it was 20. It is clear that it is too much, so I still keep 2 clusters, although the biggest decrease of variation ends at 2. In real-life I should check the correct number of clusters also by other methods, e.g. silhouette.
 
 
-```{r readdata 26,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 26,echo=TRUE,message=FALSE,warning=FALSE}
 str(km)
 km
 ```
-The plot picture shows the groups are not equal size, one is 106, other 236 and the third 164. There are some pairs, in which the grouping seems to work nicely; for instance medvd & lstat, stat & nox,dis & nox and rm & nox. But for some pairs the groups are unclear, for instance rm&ptratio, age & ptratio, ptratio & lstat. 
+The plot picture shows the groups are not equal size, one is 177 and other 329. There are some pairs, in which the grouping seems to work nicely; for instance medvd & lstat, lstat & nox,dis & nox and rm & nox. But for some pairs the groups are unclear, for instance rm&ptratio, age & ptratio, ptratio & lstat. 
 
-```{r fig24, fig.path="figures/",fig.dim=c(12,12)}
-km <-kmeans(boston_scaled2, centers = 3)
+```{r fig38, fig.path="figures/",fig.dim=c(12,12)}
+km <-kmeans(boston_scaled2, centers = 2)
 pairs(boston_scaled2, col = km$cluster)
 ```
+```{r readdata 33,echo=TRUE,message=FALSE,warning=FALSE}
+km <-kmeans(boston_scaled2, centers = 2)
+str(km)
+```
+
 ## K-meand and LDA fitting
 
 Start again with data reloading and scaling
-```{r readdata 27,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 27,echo=TRUE,message=FALSE,warning=FALSE}
 library(MASS)
 library(ggplot2)
 library(tidyr)
@@ -208,7 +215,7 @@ boston_scaled3<-as.data.frame(boston_scaled3)
 ```
 
 Number of clusters is selected to be 5 and clusters are target classess.
-```{r readdata 28,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 28,echo=TRUE,message=FALSE,warning=FALSE}
 km_4 <-kmeans(boston_scaled3, centers = 5)
 lda.fit2 <- lda(km_4$cluster ~., data = boston_scaled3)
 lda.fit2
@@ -220,7 +227,6 @@ lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0
   text(myscale * heads[,choices], labels = row.names(heads), 
        cex = tex, col=color, pos=3)
 }
-# target classes as numeric
 ```
 
 Biplot drawing next:
@@ -235,7 +241,7 @@ Arrows for each variable point in the direction of increasing values of that var
 
 ## 3D Bonus
 I copied the lines from the instructions and did the package installation
-```{r readdata 29,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+```{r readdata 32,echo=TRUE,message=FALSE,warning=FALSE}
 model_predictors <- dplyr::select(train, -crime)
 # check the dimensions
 dim(model_predictors)
@@ -247,6 +253,50 @@ matrix_product <- as.data.frame(matrix_product)
 
 Then I tried plotting as instucted
 ```{r fig26, fig.path="figures/",fig.dim=c(12,12)}
+library(plotly)
 plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
 ```
 However, at this point I run into trouble with WebGL. In the help page the cube is rolling but I just did not succeed in R Studio.
+
+## Data wrangling for exercise 5
+```{r readdata 34,echo=TRUE,message=FALSE,warning=FALSE}
+hd <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
+gii <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/gender_inequality.csv", stringsAsFactors = F, na.strings = "..")
+#checking the dimension
+dim(hd)
+dim(gii)
+#checking the structure
+str(hd)
+str(gii)
+summary(hd)
+summary(gii)
+```
+
+Renaming the columns:
+```{r readdata 35,echo=TRUE,message=FALSE,warning=FALSE}
+names(hd)[names(hd) == "Human.Development.Index..HDI."] <- "HDI"
+names(hd)[names(hd) == "Expected.Years.of.Education"] <- "EYE"
+names(hd)[names(hd) == "Life.Expectancy.at.Birth"] <- "LEB"
+names(hd)[names(hd) == "Mean.Years.of.Education"] <- "MYE"
+names(hd)[names(hd) == "Gender.Inequality.Index..GII."] <- "GII"
+names(hd)[names(hd) == "Maternal.Mortality.Ratio"] <- "MMR"
+names(hd)[names(hd) == "Percent.Representation.in.Parliament"] <- "PerParliament"
+names(hd)[names(hd) == "Population.with.Secondary.Education..Female."] <- "SecEducFemal"
+names(hd)[names(hd) == "Gross.National.Income..GNI..per.Capita"] <- "GNIncPerCap"
+names(hd)[names(hd) == "GNI.per.Capita.Rank.Minus.HDI.Rank"] <- "GNIMinusHDIRank"
+names(gii)[names(gii) == "Adolescent.Birth.Rate"] <- "ADBR"
+names(gii)[names(gii) == "Expected.Years.of.Education"] <- "EYE"
+names(gii)[names(gii) == "Life.Expectancy.at.Birth"] <- "LEB"
+names(gii)[names(gii) == "Mean.Years.of.Education"] <- "MYE"
+names(gii)[names(gii) == "Gender.Inequality.Index..GII."] <- "GII"
+names(gii)[names(gii) == "Maternal.Mortality.Ratio"] <- "MMR"
+names(gii)[names(gii) == "Percent.Representation.in.Parliament"] <- "PerParliament"
+names(gii)[names(gii) == "Population.with.Secondary.Education..Male."] <- "SecEducMale"
+names(gii)[names(gii) == "Population.with.Secondary.Education..Female."] <- "SecEducFemal"
+names(gii)[names(gii) == "Gross.National.Income..GNI..per.Capita"] <- "GNIncPerCap"
+names(gii)[names(gii) == "Labour.Force.Participation.Rate..Female."] <- "LabForParFem"
+names(gii)[names(gii) == "Labour.Force.Participation.Rate..Male."] <- "LabForParMale"
+head(hd)
+head(gii)
+```
+
