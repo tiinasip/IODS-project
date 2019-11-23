@@ -22,6 +22,7 @@ library(GGally)
 library(ggplot2)
 ggpairs(Boston, mapping = aes(), title="Scatter plot matrix, distributions",lower = list(combo = wrap("facethist", bins = 20)))
 
+
 # center and standardize variables
 boston_scaled <- scale(Boston)
 summary(boston_scaled)
@@ -62,12 +63,10 @@ test <- boston_scaled[-ind,]
 # save the correct classes from test data
 correct_classes <- test$crime
 
-#install.packages("robustfa")
-#install.robustfa
 # remove the crime variable from test data
 class(test)
 str(test)
-#test <- dplyr::select(test, -crime)
+test <- dplyr::select(test, -crime)
 
 
 #LDA

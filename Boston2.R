@@ -19,9 +19,9 @@ dist_eu<- dist(boston_scaled2)
 summary(dist_eu)
 
 #kmeans clusterin, first try with 4 clusters
-km <-kmeans(boston_scaled2, centers = 4)
+km4 <-kmeans(boston_scaled2, centers = 4)
 # plot the Boston dataset with clusters
-pairs(boston_scaled2, col = km$cluster)
+pairs(boston_scaled2, col = km4$cluster)
 
 #Find the optimal number for k
 set.seed(123)
