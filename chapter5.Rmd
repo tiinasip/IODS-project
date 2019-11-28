@@ -1,0 +1,154 @@
+---
+title: "Exercise 5"
+author: "Tiina Siponen"
+date: "22.11.2019"
+output: html_document
+---
+
+# Exercise 5
+
+*Work summary*
+Codes are available at 
+
+- <https://github.com/tiinasip/IODS-project/blob/master/human.R> 
+- <https://github.com/tiinasip/IODS-project/blob/master/human2.R> 
+
+## Data wrangling
+Data set is about human development indeces (HDI). United Nations Development Programme has collected it and it contains many indeces that can be used for evaluating nation's development in human outcomes. Traditional economic GNI values alone do not describe the humanity of the state and therefore complementary measures are needed. Such measures are for instance life expectancy, population with secondary education (female/male) etc. More information about the HDI is found [here](http://hdr.undp.org/en/content/human-development-index-hdi) 
+
+Data is loaded from the given address
+
+```{r readdata 40,echo=TRUE,message=FALSE,warning=FALSE}
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human1.txt", sep  =",", header = T)
+```
+
+Next I check the data structure and check that the variables are the same I expected. 
+
+```{r readdata 41,echo=TRUE,message=FALSE,warning=FALSE}
+str(human)
+names(human)
+```
+
+Commas are replaced and GNI changed to numeric. I also check GNI is now really a numeric variable.
+```{r readdata 42,echo=TRUE,message=FALSE,warning=FALSE}
+human$GNI <- as.numeric(human$GNI)
+str(human$GNI)
+```
+Only required columns are kept and NA rows are removed by usin complete.cases, country name column is removed:
+```{r readdata 43,echo=TRUE,message=FALSE,warning=FALSE}
+library(dplyr)
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human1.txt", sep  =",", header = T)
+human$GNI <- as.numeric(human$GNI)
+keep <- c("Country", "Edu2.FM", "Labo.FM", "Life.Exp", "Edu.Exp", "GNI", "Mat.Mor", "Ado.Birth", "Parli.F")
+human <- select(human, one_of(keep))
+data.frame(human[-1], comp = complete.cases(human))
+# filter out all rows with NA values
+human_ <- filter(human, complete.cases(human))
+tail(human_,10)
+last <- nrow(human_) - 7
+human_ <- human[1:last, ]
+rownames(human_) <- human_$Country
+#country names column removal
+human_ <- select(human_, -Country)
+dim(human_)
+human <-human_
+str(human)
+```
+
+Not all the rows are countries and therefore regions are taken out. The number of rows decreases to 155 and there are 8 variables as it should be. 
+
+## Data analysis
+
+Although my data wrangling part seemed to be successfull, I read the wrangled data set and name it to human2.
+
+```{r readdata 44,echo=TRUE,message=FALSE,warning=FALSE}
+human2 <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", sep  =",", header = T)
+str(human2)
+```
+
+### Dimensions analysis
+
+As catter plot matrix shows, Edu.Exp, Parli.F and Edu2.FM seem to be quite normally distributed. Ado.Birth, Mat.Mor and GNI are skewed to the right. Labo.FM is skewed to the left.
+```{r fig60, fig.path="figures/"}
+library(GGally)
+library(ggplot2)
+ggpairs(human2, mapping = aes(), title="Scatter plot matrix, distributions ",lower = list(combo = wrap("facethist", bins = 20)))
+```
+
+```{r readdata ,echo=TRUE,message=FALSE,warning=FALSE}
+summary(human2)
+```
+
+Expected years of education and life expectancy are most strongly positively correlated.The strongest negative correlation is between maternal mortality ratio and life expectancy. On the other hand, gross national income & Labour Force Participation Rate (Female) and Population with Secondary Education (Female) & Labour Force Participation Rate (Female) seem not to correlate at all. This is clearly visible also in correlation matrix visualization
+
+```{r fig61, fig.path="figures/"}
+library(corrplot)
+cor_matrix<-cor(human2)
+corrplot(cor_matrix, method="circle", type="upper",cl.pos="b", tl.pos="d", tl.cex=0.6)
+```
+### PCA analysis
+
+The first PCA is created with non-standardised data. 
+```{r fig62, fig.path="figures/",message=FALSE,warning=FALSE}
+pca_human <- prcomp(human2)
+s<-summary(pca_human)
+pca_pr_nonst <- round(100*s$importance[2,], digits = 1)
+pc_lab_nonst <- paste0(names(pca_pr_nonst), " (", pca_pr_nonst, "%)")
+biplot(pca_human, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab_nonst[1], ylab = pc_lab_nonst[2])
+```
+```{r readdata 49 ,echo=TRUE,message=FALSE,warning=FALSE}
+pca_pr_nonst
+```
+The picture difficult to interpret. GNI has the biggest variance here and it stands out. Printing out the variance percentages shows clearly how the PC1 seems to capture all the variance. Also the loading values are very large. However, next then the same is done with standardized data
+
+```{r fig63, fig.path="figures/"}
+human_std <- scale(human2)
+pca_human2 <- prcomp(human_std)
+s<-summary(pca_human2)
+pca_pr <- round(100*s$importance[2,], digits = 1)
+pc_lab <- paste0(names(pca_pr), " (", pca_pr, "%)")
+biplot(pca_human2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+
+
+```{r readdata 44 ,echo=TRUE,message=FALSE,warning=FALSE}
+pca_pr
+```
+
+
+It is obvious that standardisation is required before PCA in this case. In fact, it is usually recommended, because PCA is sensitive to the relative scaling of the original features and assumes features with larger variance to be more important to those with smaller variance.
+
+With standardization, GNI is no longer as strongly standing out but it is possible to see other variables as well. Gross National Income naturally creates very large numbers in  comparison e.g. life-expectansy that is not usually over 80 years. Without standardisation GNI is overemphasized.
+
+When standardized biplot is analysed, Labour Force Participation Rate (Female) and Percent Female Representation in Parliament have small angle and they are positively correlated meaning that the countries where females are active in labour force have them in the parliament as well. They also strongly contribute to PC2.
+
+Maternal mortality ratio and Adolescent Birth Rate point to the same direction with small angle with each other. They are strongly positively correlated with each other. These components are also contributing to PC1. From the content perspective this is very logical. When girls are not educated - meaning families and the society are not investing in them - they are in higher risk to be married as children, and when they don't have education, own income and status, their healthy needs are not seen important in the society. 
+
+The remaining variables show to the opposite direction. Those variables are Population with Secondary Education (Female), Expected Years of Education, Gross National Income (GNI) per Capita and Life Expectancy at Birth. They are positively correlated with each other and negatively correlated with maternal mortality ratio and adolescent birth rate. These components are also contributing negatively to PC1.
+
+The correlation matrix confirms correlations.
+
+```{r readdata 45 ,echo=TRUE,message=FALSE,warning=FALSE}
+cor_matrix<-round(cor(human2), digits=2)
+cor_matrix
+```
+
+```{r readdata 47 ,echo=TRUE,message=FALSE,warning=FALSE}
+pca_human2
+```
+
+In PC1 the most meaningful components are life expectancy to one direction and maternal mortality to the other direction. As a whole, the meaningful components in PC1 are referring life expectancy as a whole. When woman's life is valued, she is educated, given opportunites, taken caren of at labour and thus she lives longer.
+
+In PC2 Labour Force Participation Rate (Female) and Percent Female Representation in Parliament are the most meaningful components.These metrics could be describes as "Women attendance rate in society". 
+
+## Tea set
+
+
+```{r readdata 50 ,echo=TRUE,message=FALSE,warning=FALSE}
+library(FactoMineR)
+tea_time <-data(tea)
+summary(tea_time)
+str(tea_time)
+dim(tea_time)
+```
+
