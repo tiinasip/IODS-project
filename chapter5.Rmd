@@ -14,6 +14,7 @@ Codes are available at
 - <https://github.com/tiinasip/IODS-project/blob/master/human2.R> 
 
 ## Data wrangling
+
 Data set is about human development indeces (HDI). United Nations Development Programme has collected it and it contains many indeces that can be used for evaluating nation's development in human outcomes. Traditional economic GNI values alone do not describe the humanity of the state and therefore complementary measures are needed. Such measures are for instance life expectancy, population with secondary education (female/male) etc. More information about the HDI is found [here](http://hdr.undp.org/en/content/human-development-index-hdi) 
 
 Data is loaded from the given address
@@ -137,18 +138,94 @@ cor_matrix
 pca_human2
 ```
 
-In PC1 the most meaningful components are life expectancy to one direction and maternal mortality to the other direction. As a whole, the meaningful components in PC1 are referring life expectancy as a whole. When woman's life is valued, she is educated, given opportunites, taken caren of at labour and thus she lives longer.
+In PC1 the most meaningful components are life expectancy to one direction and maternal mortality to the other direction. As a whole, the meaningful components in PC1 are referring life expectancy as a whole. When a woman's life is valued, she is educated, given opportunites, taken caren of at labour and thus she lives longer.
 
-In PC2 Labour Force Participation Rate (Female) and Percent Female Representation in Parliament are the most meaningful components.These metrics could be describes as "Women attendance rate in society". 
+In PC2 Labour Force Participation Rate (Female) and Percent Female Representation in Parliament are the most meaningful components.These metrics could be grouped as "Women attendance rate in society". 
+PC1 explains 53,6 % and PC2 16,2%. In other words, factors related to the life excpectancy explain the most and factors related to women attendance rate in the society covers about 16 %. Next groupings are under 10 %.
 
 ## Tea set
 
+The data used here is based on a questionnaire on tea. 300 individuals were asked how they drink tea (18 questions), what are their product's perception (12 questions) and some personal details (4 questions). 
 
-```{r readdata 50 ,echo=TRUE,message=FALSE,warning=FALSE}
+The tea set data is loaded. There are 300 rows and 36 variables. Breakfast, tea time, evening, lunch, dinner, always, home, work, tearoom, friends, resto, pub, sugar, sex, escape, spirituality, healthy, diuretic, friendliness, iron, feminine, sophisticated, slimming, exciting, relaxing, effect on health and sport have two options (being binary), other variables have more. Only price and age are continous.
+
+```{r readdata  50 , echo=TRUE,message=FALSE, eval=FALSE, warning=FALSE}
+#install.packages("FactoMineR")
 library(FactoMineR)
-tea_time <-data(tea)
+library(dplyr)
+library(MASS)
+library(tidyr)
+library(stringr)
+tea_time <-tea
 summary(tea_time)
 str(tea_time)
 dim(tea_time)
 ```
+![str](C:\Users\SIPONENTI\Documents\IODS-project\figures\str_tea.PNG)
 
+```{r readdata 52 ,echo=TRUE,message=FALSE, eval=FALSE}
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch","where","price","lunch","friends","friendliness")
+tea_time2 <- select(tea, keep_columns)
+mca_tea <- MCA(tea_time2, graph = FALSE)
+summary(mca_tea)
+print(mca_tea)
+```
+![summary](C:\Users\SIPONENTI\Documents\IODS-project\figures\summary_tea.PNG)
+
+MCA graphs and factor map are created
+```{r fig64, fig.path="figures/",echo=TRUE,message=FALSE, eval=FALSE}
+mca_tea <- MCA(tea_time2, graph = TRUE)
+plot(mca_tea, invisible=c("ind"))
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\mca_plot.PNG)
+
+
+Closer look to eigenvalues shows that the first MCA dimension covers almost 12% of variance and 6 dimensions reach over 50 %.
+
+```{r readdata 53 ,echo=TRUE,message=FALSE, eval=FALSE}
+library(factoextra)
+eig.val <- get_eigenvalue(mca_tea)
+head(eig.val)
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\eig_tea.PNG)
+
+```{r fig65, fig.path="figures/",echo=TRUE,message=FALSE, eval=FALSE}
+fviz_screeplot(mca_tea, addlabels = TRUE, ylim = c(0, 45))
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\scree_tea.PNG)
+
+Next I tried biplot drawing, where individuals are in blue and variables in red. But this was too wild to make any real analysis. The distance between any row points or column points should give a measure of their similarity (or dissimilarity). Row points with similar profile are close on the factor map. The same holds true for column points. But anyway, one can see that for instance individuals 212 and 199 are very similar.
+```{r fig66, fig.path="figures/",echo=TRUE,message=FALSE, eval=FALSE}
+fviz_mca_biplot(mca_tea, 
+                repel = TRUE, # Avoid text overlapping (slow if many point)
+                ggtheme = theme_minimal())
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\biplot_tea.PNG)
+
+
+The next plots identifies variables that are the most correlated with each dimension. The squared correlations between variables and the dimensions are used as coordinates. Where, how and price are most correlated with the dimansion 1 and friends and tea with dimension 2. Sugar is not actually correlating with either dimension.
+```{r fig67, fig.path="figures/",echo=TRUE,message=FALSE, eval=FALSE}
+fviz_mca_var(mca_tea, choice = "mca.cor", 
+             repel = TRUE, # Avoid text overlapping (slow)
+             ggtheme = theme_minimal())
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\variables_tea.PNG)
+
+Here similar variable categories are grouped toghether. Negative correlation is in opposite directions; for instance, p_private label and chain stroe+tea shop are negatively correlated
+```{r fig70, fig.path="figures/",echo=TRUE,message=FALSE, eval=FALSE}
+fviz_mca_var(mca_tea, col.var="black", shape.var = 15,
+             repel = TRUE)
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\var_cat_tea.PNG)
+
+In the end I analyse, which top 20 variable categories contributes most to dimensions 1 and 2. Tea shop is contributing the second most in both dimensions. P_upscale is contributing over 15 % in dimension 1 and chainstore+tea shop abou 11 % in dimension 2.
+
+```{r fig69, fig.path="figures/",echo=TRUE,message=FALSE, eval=FALSE}
+fviz_contrib(mca_tea, choice = "var", axes = 1, top = 20)
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\dim1_var_tea.png)
+
+```{r fig68, fig.path="figures/", eval=FALSE, echo=TRUE}
+fviz_contrib(mca_tea, choice = "var", axes = 2, top = 20)
+```
+![ ](C:\Users\SIPONENTI\Documents\IODS-project\figures\dim2_var_tea.png)
