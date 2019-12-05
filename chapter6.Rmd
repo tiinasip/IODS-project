@@ -1,0 +1,275 @@
+---
+title: "chapter6"
+author: "Tiina Siponen"
+date: "28 11 2019"
+output: html_document
+---
+
+# Exercise 6
+
+*Work summary*
+Codes are available at 
+
+- <https://github.com/tiinasip/IODS-project/blob/master/meet_and_repeat.R> 
+
+## Data wrangling for both data sets
+
+The data is based on th brief psychiatric rating scale (BPRS) measured before treatment began (week 0) and then at weekly intervals for eight weeks. The BPRS assesses the level of 18 symptom constructs such as hostility, suspiciousness, hallucinations and grandiosity; each of these is rated from one (not present) to seven (extremely severe). The scale is used to evaluate patients suspected of having schizophrenia.
+
+Treatment variable is either 1 or 2 and it tells which was the taken treatment. Subject refers to patient ids and week to the measurement week. Minimum points are 0, maximum 18*7=126. Ratings are done during 9 weeks and for each patient both treatments are done.
+
+Teh data is first loaded in a wide form. The basic checks show 40 rows and 11 variables. Weeks are rows in the data. In the wide data format there is a single row for every data point with multiple columns to hold the values of various attributes.
+```{r readdata 60,echo=TRUE,message=FALSE,warning=FALSE}
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+names(BPRS)
+str(BPRS)
+summary(BPRS)
+head(BPRS)
+```
+
+The similar steps are taken with the RATS data. The RATS data is collected in a nutrition study conducted in three groups of rats. The groups were put on different diets, and each animal’s body weight (grams) was recorded repeatedly (approximately) weekly, except in week seven when two recordings were taken) over a 9-week period. The question of most interest is whether the growth profiles of the three groups differ.
+
+From the head & summary of the data it is easy to observe that data is in wide format, in other words there is again a single row for every data point with multiple columns to hold the values of various attributes.
+
+```{r readdata 61,echo=TRUE,message=FALSE,warning=FALSE}
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+names(RATS)
+str(RATS)
+summary(RATS)
+head(RATS)
+```
+
+In BPRS, categorical datasets are created and week variable is created to show the week numbers
+
+```{r readdata 62,echo=TRUE,message=FALSE,warning=FALSE}
+library(dplyr)
+library(tidyr)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+# Convert to long form
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+# Extract the week number
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,5)))
+# glimpse at the BPRSL data
+glimpse(BPRSL)
+dim(BPRSL)
+str(BPRSL)
+```
+
+Now BPRS data is in the long format. In the long format, for each data point, there are as many rows as the number of attributes and each row contains the value of a particular attribute for a given data point.
+
+In RATS, categorical datasets are created and Time variable is created to show the week numbers. The similar change from wide format to long format is visible. There are now 5 variables and 176 observations. In the wide format, there were 16 rows and 13 columns. The weeknumbers are now attribute for the data point.
+
+```{r readdata 63,echo=TRUE,message=FALSE,warning=FALSE}
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+# Convert data to long form
+RATSL <- RATS %>%
+  gather(key = WD, value = Weight, -ID, -Group) %>%
+  mutate(Time = as.integer(substr(WD,3,4))) 
+# Glimpse the data
+glimpse(RATSL)
+dim(RATSL)
+str(RATSL)
+head(RATSL)
+```
+
+## Analysis -  BPRSL
+
+### Plots to analyse data
+
+The object of the analysis is to use linear mixed effects models to BPRSL data. First it adviced to join points belonging to each patient and draw a plot to see, are individual measure points independent.
+
+```{r fig 110, fig.path="figures/"}
+library(ggplot2)
+ggplot(BPRSL, aes(x = week, y = bprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "right") + 
+  scale_y_continuous(limits = c(min(BPRSL$bprs), max(BPRSL$bprs)))
+```
+
+Individuals, who have high values in the beginning, tend to have higher values also at the end. Therefore I standardize the points to be able to see more clearly tracking by treatment. In standardization, the mean is 0. Now the plots are different, and it is not obvious, whether the treatment decreases the points compared to the starting time.  
+
+```{r fig200, fig.path="figures/"}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = (bprs - mean(bprs))/sd(bprs) ) %>%
+  ungroup()
+ggplot(BPRSL, aes(x = week, y = stdbprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  scale_y_continuous(name = "standardized bprs")
+```
+
+
+### Simple linear model
+The explanatory variables are treatment and week.
+
+Simple linear model is created for comparison. Multiple R-squares is 0.1851, P value is significat for the week. This is not valid modelling, because it assumes independence of the repeated measures of bprs - but this is not likely.
+```{r }
+simple_linear_model <- lm(bprs ~ treatment + week, data = BPRSL)
+summary(simple_linear_model)
+```
+### Randon Intercept Model and Random Intercept and Random Slope Model
+
+Random Intercept Model is created first. The standard deviation of a subject is 6.89, which is quite high and indicates that the values are spreading. The closer T is to 0, the more likely there isn't a significant difference. Week's t-value is high and it indicates relation, but treatment2 is close to zero - seems that it does not have effect on bprs resutls.
+
+
+```{r readdata 201,echo=TRUE,message=FALSE,warning=FALSE}
+library(lme4)
+BPRSL_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRSL, REML = FALSE)
+summary(BPRSL_ref)
+```
+
+Next Random Intercept and Random Slope Model is created. This model takes into account individual differences in bprs profiles but also the effect of weeks. Subject's standard deviation is bigger than in Random Intercept Model.
+The closer T is to 0, the more likely there isn't a significant difference. Week's t-value is high and it indicates relation, but treatment2 is close to zero - seems that it does not have effect on bprs resutls.
+
+
+```{r readdata 202,echo=TRUE,message=FALSE,warning=FALSE}
+BPRSL_ref1 <- lmer(bprs ~ week + treatment + (week | subject), data = BPRSL, REML = FALSE)
+summary(BPRSL_ref1)
+# perform an ANOVA test on the two models
+anova(BPRSL_ref1, BPRSL_ref)
+```
+When models BPRSL_ref and BPRSL_ref1 are compared in the likelihood ratio test above,  chi square value is close to zero, and it is significat on 0.05 level. Chi square tests random effects variance and it indicates here that the model is catching the random effects.  The lower the value the better the fit against the comparison model.
+
+
+```{r readdata 203,echo=TRUE,message=FALSE,warning=FALSE}
+BPRSL_ref2 <- lmer(bprs ~ week * treatment + (week | subject), data = BPRSL, REML = FALSE)
+summary(BPRSL_ref2)
+anova(BPRSL_ref2, BPRSL_ref1)
+```
+
+A vector of fitted values is created and added to the BPRSL data 
+```{r readdata 204,echo=TRUE,message=FALSE,warning=FALSE}
+Fitted <- fitted(BPRSL_ref2)
+BPRSL <- BPRSL %>%
+  mutate(Fitted)
+```
+
+Next fitted values from the model are plotted. The both treatments show decrease of bprs points over time.
+
+```{r fig101, fig.path="figures/"}
+ggplot(BPRSL, aes(x = week, y = Fitted, group= subject, linetype = treatment)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "right") + 
+  scale_y_continuous(limits = c(min(BPRSL$bprs), max(BPRSL$bprs)))
+```
+
+Comparison to observed values:
+```{r fig105, fig.path="figures/"}
+ggplot(BPRSL, aes(x = week, y = bprs, group= subject, linetype = treatment)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "right") + 
+  scale_y_continuous(limits = c(min(BPRSL$bprs), max(BPRSL$bprs)))
+```
+
+## Analysis - RATSL
+
+### Tracking effect
+
+The weight development of each mouse is shown in figures below.
+```{r fig111, fig.path="figures/"}
+ggplot(RATSL, aes(x = Time, y = Weight, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  theme(legend.position = "right") + 
+  scale_y_continuous(limits = c(min(RATSL$Weight), max(RATSL$Weight)))
+```
+
+Individuals, who have high values in the beginning, tend to have higher values also at the end, similary as in BPRS data. Therefore I standardize the weights to be able to see more clearly tracking by groups. In standardization, the mean is 0.
+
+```{r 52, fig.path="figures/"}
+RATSL <- RATSL %>%
+  group_by(Time) %>%
+  mutate(stdweight = (Weight - mean(Weight))/sd(Weight) ) %>%
+  ungroup()
+glimpse(RATSL)
+```
+```{r fig112, fig.path="figures/"}
+ggplot(RATSL, aes(x = Time, y = stdweight, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  scale_y_continuous(name = "standardized weights")
+```
+
+### Summary Measure Analysis
+
+Standard error of the mean is calculated next. 
+```{r readdata 64,echo=TRUE,message=FALSE,warning=FALSE}
+n <- RATSL$Time %>% unique() %>% length()
+RATSSS <- RATSL %>%
+  group_by(Group, Time) %>%
+  summarise( mean = mean(Weight), se = sd(Weight)/sqrt(n) ) %>%
+  ungroup()
+RATSSS$se
+glimpse(RATSSS)
+```
+
+Mean weight grow profiles are drawn in the next figure. All groups gain wieght, but groups 2 and 3 gain it faster than group 1. Group 2 seems to grow th most, but there are also more variance in it compared to other groups. 
+
+```{r fig 106, fig.path="figures/"}
+ggplot(RATSSS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2,3)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2,3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se, linetype="1"), width=0.3) +
+  theme(legend.position = "right") +
+  scale_y_continuous(name = "mean(Weight) +/- se(Weight)")
+```
+
+Means from weeks 8-64 are calculate to check the mean development. The first week (week 1) is left out because it was the starting week and there was not yet any change due to nutrition changes.
+
+```{r readdata 65,echo=TRUE,message=FALSE,warning=FALSE}
+RATSSL8S <- RATSL %>%
+  filter(Time > 1) %>%
+  group_by(Group, ID) %>%
+  summarise( mean=mean(Weight))
+# Glimpse the data
+glimpse(RATSSL8S)
+```
+
+### Boxplot mean versus treatment
+```{r fig 100, fig.path="figures/"}
+ggplot(RATSSL8S, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight), weeks 8-64")
+```
+
+There are some outliers in data. Next the outliers are taken away based on the picture above. Both more than 550 and under 250 outliers are excluded. 
+```{r fig 101, fig.path="figures/"}
+RATSSL8S1 <- RATSSL8S %>%
+  filter(mean < 550 & mean>250)
+ggplot(RATSSL8S1, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight), weeks 8-64")
+```
+
+T-test cannot be run because there are more than two groups. Anova is used instead.
+```{r readdata 67,echo=TRUE,message=FALSE,warning=FALSE}
+# Add the baseline from the original data as a new variable to the summary data
+RATSSL8S2 <- RATSSL8S %>%
+  mutate(baseline = RATS$Time1)
+# Fit the linear model with the mean as the response 
+fit <- lm(mean ~ Group, data = RATSSL8S2)
+# Compute the analysis of variance table for the fitted model with anova()
+anova(fit)
+confint(fit)
+```
+P value is very low, under 0.05 meaning there is a significant relationship between group and weight. F value is high, which also is good. Confidence intervals for group 2 and group 3 are also shown. So in the end, nutrition group is very meaningful.
+
